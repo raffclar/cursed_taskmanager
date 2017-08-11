@@ -2,8 +2,6 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
-#include <string>
-#include <memory>
 
 typedef void (*install_ptr)(uint32_t);
 
