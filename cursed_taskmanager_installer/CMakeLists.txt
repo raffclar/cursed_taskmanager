@@ -4,8 +4,15 @@ set(CMAKE_CXX_STANDARD 11)
 set(SOURCE_FILES Main.cpp)
 add_executable(cursed_taskmanager_installer ${SOURCE_FILES})
 
-set_target_properties(cursed_taskmanager_installer PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:WINDOWS")
-set_target_properties(cursed_taskmanager_installer PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS")
+if(WIN32)
+    set_target_properties(WindowApplicationExample PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:WINDOWS")
+    set_target_properties(WindowApplicationExample PROPERTIES COMPILE_DEFINITIONS_DEBUG "_WINDOWS")
+    set_target_properties(WindowApplicationExample PROPERTIES LINK_FLAGS_RELWITHDEBINFO "/SUBSYSTEM:WINDOWS")
+    set_target_properties(WindowApplicationExample PROPERTIES COMPILE_DEFINITIONS_RELWITHDEBINFO "_WINDOWS")
+    set_target_properties(WindowApplicationExample PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS")
+    set_target_properties(WindowApplicationExample PROPERTIES LINK_FLAGS_MINSIZEREL "/SUBSYSTEM:WINDOWS")
+endif(WIN32)
+
 set_target_properties(
         cursed_taskmanager_installer
         PROPERTIES
