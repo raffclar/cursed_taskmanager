@@ -17,8 +17,10 @@ static win_msg_ptr GetWinMessageIdentifier = nullptr;
 static win_msg_size GetWinMessageSize = nullptr;
 static HWND taskmgr_handle = nullptr;
 
-bool InitialiseLibrary(const std::string &library_name) {
-    HMODULE hook_library = LoadLibrary(library_name.c_str());
+// LoadLibrary() method for possible of the packaging the 
+// dll inside the executable
+bool InitialiseLibrary(const std::wstring &library_name) {
+    HMODULE hook_library = LoadLibraryW(library_name.c_str());
 
     if (hook_library == nullptr) {
         return false;
@@ -71,42 +73,31 @@ bool UninitialiseTaskManagerHook() {
     return true;
 }
 
-bool RunLoop() {
-    std::string hook_lib_name("cursed_taskmgr.dll");
-
-    bool loaded = InitialiseLibrary(hook_lib_name);
-
-    // For cygwin compiled libraries
-    if (!loaded) {
-        loaded = InitialiseLibrary("cyg" + hook_lib_name);;
+#pragma warning(suppress: 4100)
+int WINAPI WinMain(HINSTANCE inst, HINSTANCE prev, LPSTR cmd, int show) {
+    if (!InitialiseLibrary(L"cursed_taskmgr.dll")) {
+        return 1;
     }
-
-    if (!loaded) {
-        return false;
-    }
-
 
     int tries = 0;
-    bool success = false;
+    bool hooked = false;
 
     while (tries < 100) {
-        HWND taskmgr_handle = FindWindow("TaskManagerWindow", "Task Manager");
+        HWND new_taskmgr_handle = FindWindowW(L"TaskManagerWindow", L"Task Manager");
 
-        if (taskmgr_handle != nullptr && !success) {
-            success = InitialiseTaskManagerHook(taskmgr_handle);
+        // Hook if we found a task manager window and its handle is new
+        if (new_taskmgr_handle != nullptr && new_taskmgr_handle != taskmgr_handle) {
+            InitialiseTaskManagerHook(new_taskmgr_handle);
+            tries = 0;
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-        if (success) {
+        if (hooked) {
             tries++;
         }
     }
 
     UninitialiseTaskManagerHook();
-}
-
-int WINAPI WinMain(HINSTANCE inst, HINSTANCE prev, LPSTR cmd, int show) {
-    RunLoop();
     return 0;
 }
