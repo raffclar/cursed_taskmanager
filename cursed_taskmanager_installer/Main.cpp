@@ -6,8 +6,11 @@
 #include <memory>
 
 typedef void (*install_ptr)(uint32_t);
+
 typedef void (*uninstall_ptr)();
+
 typedef void (*win_msg_ptr)(wchar_t *, uint32_t);
+
 typedef uint32_t (*win_msg_size)();
 
 static install_ptr InstallHook = nullptr;
