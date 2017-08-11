@@ -14,8 +14,9 @@ HWND sys_list_view;
 HWND sys_tab_ctrl;
 HWND taskmgr_handle;
 
-void SetSysListViewEntryText(HWND table_handle) {
-    auto count = static_cast<int>(SendMessageW(table_handle, LVM_GETITEMCOUNT, 0, 0));
+void EditTextElements() {
+    auto count = static_cast<int>
+    (SendMessageW(sys_list_view, LVM_GETITEMCOUNT, 0, 0));
 
     for (int i = 0; i < count; i++) {
         for (int j = 0; j < 7; j++) {
@@ -26,7 +27,7 @@ void SetSysListViewEntryText(HWND table_handle) {
             lvItem.iSubItem = j;
             lvItem.pszText = buffer.data();
             lvItem.cchTextMax = static_cast<int>(buffer.size());
-            SendMessageW(table_handle, LVM_GETITEMW, 0, (LPARAM) &lvItem);
+            SendMessageW(sys_list_view, LVM_GETITEMW, 0, (LPARAM) &lvItem);
             std::wstring text(buffer.data());
 
             if (text[0] != L' ') {
@@ -35,12 +36,13 @@ void SetSysListViewEntryText(HWND table_handle) {
                 buffer.assign(text.c_str(), text.c_str() + text.size());
                 lvItem.pszText = buffer.data();
                 lvItem.cchTextMax = static_cast<int>(buffer.size());
-                SendMessageW(table_handle, LVM_SETITEMW, 0, (LPARAM) &lvItem);
+                SendMessageW(sys_list_view, LVM_SETITEMW, 0, (LPARAM) &lvItem);
             }
         }
     }
 
-    count = static_cast<int>(SendMessageW(sys_tab_ctrl, TCM_GETITEMCOUNT, 0, 0));
+    count = static_cast<int>
+    (SendMessageW(sys_tab_ctrl, TCM_GETITEMCOUNT, 0, 0));
 
     for (int i = 0; i < count; i++) {
         std::vector<wchar_t> buffer(1024);
@@ -48,7 +50,7 @@ void SetSysListViewEntryText(HWND table_handle) {
         tci_item.mask = TCIF_TEXT;
         tci_item.pszText = buffer.data();
         tci_item.cchTextMax = static_cast<int>(buffer.size());
-        SendMessageW(sys_tab_ctrl, TCM_GETITEMW, i, (LPARAM) &tci_item);
+        SendMessageW(sys_tab_ctrl, TCM_GETITEMW, static_cast<WPARAM>(i), (LPARAM) &tci_item);
         std::wstring text(buffer.data());
 
         if (text[0] != L' ') {
@@ -56,7 +58,7 @@ void SetSysListViewEntryText(HWND table_handle) {
             buffer.assign(text.c_str(), text.c_str() + text.size());
             tci_item.pszText = buffer.data();
             tci_item.cchTextMax = static_cast<int>(buffer.size());
-            SendMessageW(sys_tab_ctrl, TCM_SETITEMW, i, (LPARAM) &tci_item);
+            SendMessageW(sys_tab_ctrl, TCM_SETITEMW, static_cast<WPARAM>(i), (LPARAM) &tci_item);
         }
     }
 }
@@ -70,12 +72,9 @@ LRESULT CALLBACK CallWndProc(int code, WPARAM wParam, LPARAM lParam) {
 
     if (action) {
         if (is_redraw && parameters->wParam == TRUE && is_sys_list_view) {
-            SetSysListViewEntryText(parameters->hwnd);
+            EditTextElements();
             std::wstring title = Zalgo::Corrupt(L"Task Manager");
             SetWindowTextW(taskmgr_handle, title.c_str());
-
-            std::cout << "test 1" << std::endl;
-            std::cout << sys_tab_ctrl << std::endl;
         } else if (is_redraw && is_sys_tab_ctrl) {
         }
     }
@@ -85,21 +84,21 @@ LRESULT CALLBACK CallWndProc(int code, WPARAM wParam, LPARAM lParam) {
 
 // Avoid C++ name mangling
 extern "C" {
-    __declspec(dllexport) void Install(DWORD thread_id) {
-        hook_handle = SetWindowsHookExW(WH_CALLWNDPROC, CallWndProc, instance_handle, thread_id);
-    }
+__declspec(dllexport) void Install(DWORD thread_id) {
+    hook_handle = SetWindowsHookExW(WH_CALLWNDPROC, CallWndProc, instance_handle, thread_id);
+}
 
-    __declspec(dllexport) void Uninstall() {
-        UnhookWindowsHookEx(hook_handle);
-    }
+__declspec(dllexport) void Uninstall() {
+    UnhookWindowsHookEx(hook_handle);
+}
 
-    __declspec(dllexport) void GetWinMessageIdentifier(wchar_t *buffer, uint32_t size) {
-        memcpy(buffer, L"taskmgr_mod", size);
-    }
+__declspec(dllexport) void GetWinMessageIdentifier(wchar_t *buffer, uint32_t size) {
+    memcpy(buffer, L"taskmgr_mod", size);
+}
 
-    __declspec(dllexport) uint32_t GetWinMessageSize() {
-        return sizeof(L"taskmgr_mod");
-    }
+__declspec(dllexport) uint32_t GetWinMessageSize() {
+    return sizeof(L"taskmgr_mod");
+}
 };
 
 struct ChildWindowData {
@@ -126,7 +125,7 @@ BOOL CALLBACK EnumChildProc(HWND current_handle, LPARAM l_param) {
     return TRUE;
 }
 
-HWND GetChildWindow(const std::string &parent_class, const std::string &parent_window, std::string child_class) {
+HWND GetChildWindow(const std::string &parent_class, const std::string &parent_window, const std::string &child_class) {
     std::unique_ptr<wchar_t[]> parent_class_w(new wchar_t[parent_class.size() + 1]());
     std::unique_ptr<wchar_t[]> parent_window_w(new wchar_t[parent_window.size() + 1]());
     std::unique_ptr<wchar_t[]> child_class_w(new wchar_t[child_class.size() + 1]());
