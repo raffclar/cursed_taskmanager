@@ -1,7 +1,11 @@
 # cursed_taskmanager
 
-Runs ok when compiled with MSVC using Visual Studio 2017 with Cmake. Compiling under Cygwin works but fails to run correctly when launched.
+Utilises unicode support in Windows to insert superscript and subscript characters via message hooking
 
+###Compiling
+Compile with Cmake using MSVC from Visual Studio 2017/15.0
+
+###Example
 ![running example][image]
 
 [image]: https://i.imgur.com/n2iALnp.png "Running example"
