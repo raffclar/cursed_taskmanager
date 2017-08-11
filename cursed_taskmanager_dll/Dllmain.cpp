@@ -126,15 +126,15 @@ BOOL CALLBACK EnumChildProc(HWND current_handle, LPARAM l_param) {
 }
 
 HWND GetChildWindow(const std::string &parent_class, const std::string &parent_window, const std::string &child_class) {
-    std::unique_ptr<wchar_t[]> parent_class_w(new wchar_t[parent_class.size() + 1]());
-    std::unique_ptr<wchar_t[]> parent_window_w(new wchar_t[parent_window.size() + 1]());
-    std::unique_ptr<wchar_t[]> child_class_w(new wchar_t[child_class.size() + 1]());
+    std::vector<wchar_t> parent_class_w(parent_class.size() + 1);
+    std::vector<wchar_t> parent_window_w(parent_window.size() + 1);
+    std::vector<wchar_t> child_class_w(child_class.size() + 1);
 
-    mbstowcs(parent_class_w.get(), parent_class.c_str(), parent_class.size() + 1);
-    mbstowcs(parent_window_w.get(), parent_window.c_str(), parent_window.size() + 1);
-    mbstowcs(child_class_w.get(), child_class.c_str(), child_class.size() + 1);
+    mbstowcs(parent_class_w.data(), parent_class.c_str(), parent_class.size() + 1);
+    mbstowcs(parent_window_w.data(), parent_window.c_str(), parent_window.size() + 1);
+    mbstowcs(child_class_w.data(), child_class.c_str(), child_class.size() + 1);
 
-    HWND parent_handle = FindWindowW(parent_class_w.get(), parent_window_w.get());
+    HWND parent_handle = FindWindowW(parent_class_w.data(), parent_window_w.data());
 
     if (parent_handle == nullptr) {
         return parent_handle;
@@ -144,7 +144,7 @@ HWND GetChildWindow(const std::string &parent_class, const std::string &parent_w
 
     ChildWindowData child_data{
             &child_handle,
-            child_class_w.get()
+            child_class_w.data()
     };
 
     EnumChildWindows(parent_handle, EnumChildProc, (LPARAM)&child_data);
