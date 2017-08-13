@@ -21,22 +21,21 @@ void EditTextElements() {
     for (int i = 0; i < count; i++) {
         for (int j = 0; j < 7; j++) {
             std::vector<wchar_t> buffer(1024);
-            LVITEMW lvItem{0};
-            lvItem.mask = LVIF_TEXT;
-            lvItem.iItem = i;
-            lvItem.iSubItem = j;
-            lvItem.pszText = buffer.data();
-            lvItem.cchTextMax = static_cast<int>(buffer.size());
-            SendMessageW(sys_list_view, LVM_GETITEMW, 0, (LPARAM) &lvItem);
+            LVITEMW lv_item{0};
+            lv_item.mask = LVIF_TEXT;
+            lv_item.iItem = i;
+            lv_item.iSubItem = j;
+            lv_item.pszText = buffer.data();
+            lv_item.cchTextMax = static_cast<int>(buffer.size());
+            SendMessageW(sys_list_view, LVM_GETITEMW, 0, (LPARAM) &lv_item);
             std::wstring text(buffer.data());
 
             if (text[0] != L' ') {
-                // Modify text
                 text = L" " + Zalgo::Corrupt(text);
                 buffer.assign(text.c_str(), text.c_str() + text.size());
-                lvItem.pszText = buffer.data();
-                lvItem.cchTextMax = static_cast<int>(buffer.size());
-                SendMessageW(sys_list_view, LVM_SETITEMW, 0, (LPARAM) &lvItem);
+                lv_item.pszText = buffer.data();
+                lv_item.cchTextMax = static_cast<int>(buffer.size());
+                SendMessageW(sys_list_view, LVM_SETITEMW, 0, (LPARAM) &lv_item);
             }
         }
     }
@@ -63,23 +62,23 @@ void EditTextElements() {
     }
 }
 
-LRESULT CALLBACK CallWndProc(int code, WPARAM wParam, LPARAM lParam) {
-    auto parameters = reinterpret_cast<PCWPSTRUCT>(lParam);
+LRESULT CALLBACK CallWndProc(int code, WPARAM w_param, LPARAM l_param) {
+    auto parameters = reinterpret_cast<PCWPSTRUCT>(l_param);
     bool action = code == HC_ACTION;
     bool is_redraw = parameters->message == WM_SETREDRAW;
     bool is_sys_list_view = parameters->hwnd == sys_list_view;
     bool is_sys_tab_ctrl = parameters->hwnd == sys_tab_ctrl;
-
+    
+    // TODO: Use Spy++ to find when SysTabControl32 is being redrawn
     if (action) {
         if (is_redraw && parameters->wParam == TRUE && is_sys_list_view) {
             EditTextElements();
             std::wstring title = Zalgo::Corrupt(L"Task Manager");
             SetWindowTextW(taskmgr_handle, title.c_str());
-        } else if (is_redraw && is_sys_tab_ctrl) {
         }
     }
 
-    return CallNextHookEx(hook_handle, code, wParam, lParam);
+    return CallNextHookEx(hook_handle, code, w_param, l_param);
 }
 
 // Avoid C++ name mangling
@@ -112,12 +111,10 @@ BOOL CALLBACK EnumChildProc(HWND current_handle, LPARAM l_param) {
     uint32_t copied = RealGetWindowClassW(current_handle, class_name, MAX_CLASS_NAME);
 
     if (copied == 0) {
-        // End enumeration
         return FALSE;
     }
 
     if (class_name == child_data->child_class) {
-        // We found it
         *child_data->handle_pointer = current_handle;
         return FALSE;
     }
@@ -159,13 +156,12 @@ BOOL ProcessAttach(HINSTANCE handle) {
     taskmgr_handle = FindWindowW(L"TaskManagerWindow", L"Task Manager");
     GetWindowThreadProcessId(taskmgr_handle,
                              reinterpret_cast<LPDWORD>(&task_pid));
-    bool is_taskmgr = task_pid == GetCurrentProcessId();
-
-    if (is_taskmgr) {
-        sys_list_view = GetChildWindow("TaskManagerWindow",
-                                       "Task Manager", "SysListView32");
-        sys_tab_ctrl = GetChildWindow("TaskManagerWindow",
-                                      "Task Manager", "SysTabControl32");
+                             
+    if (task_pid == GetCurrentProcessId()) {
+        sys_list_view = GetChildWindowW(L"TaskManagerWindow",
+                                       L"Task Manager", L"SysListView32");
+        sys_tab_ctrl = GetChildWindowW(L"TaskManagerWindow",
+                                      L"Task Manager", L"SysTabControl32");
     }
 
     return TRUE;
@@ -175,6 +171,7 @@ BOOL ProcessDetach() {
     return TRUE;
 }
 
+#pragma warning(suppress: 4100)
 extern "C" BOOL WINAPI DllMain(
         HINSTANCE hinstDLL,
         DWORD fdwReason,
